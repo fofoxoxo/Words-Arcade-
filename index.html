@@ -85,6 +85,19 @@ li{margin:4px 0}
   <section id="viewGames" class="hidden">
     <div id="gameList">
       <h2 style="margin-top:0">Arcade Games</h2>
+      <div class="box" style="margin-bottom:14px">
+  <b>Word source</b>
+  <div class="inline">
+    <input id="gw" placeholder="Type a word, e.g. panther" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Custom word">
+    <button type="button" id="gwLoad">Load</button>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+    <button type="button" id="gwRand">Random word</button>
+    <button type="button" id="gwReset">Use built-in words</button>
+  </div>
+  <div class="src" id="gwMsg"></div>
+  <div class="chips" id="gwList" style="margin-top:6px"></div>
+</div>
       <button class="row" data-g="anagram" type="button"><span class="n">1</span><span><b>Anagram Scramble</b><small>Unscramble the letters to find the word.</small></span></button>
       <button class="row" data-g="syn" type="button"><span class="n">2</span><span><b>Synonyms Match</b><small>Pick the word with the same meaning.</small></span></button>
       <button class="row" data-g="ant" type="button"><span class="n">3</span><span><b>Antonyms Challenge</b><small>Pick the word with the opposite meaning.</small></span></button>
@@ -345,11 +358,66 @@ function openGame(id) {
 }
 function closeGame() { box.classList.add("hidden"); list.classList.remove("hidden"); box.innerHTML = ""; }
 list.addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b) openGame(b.getAttribute("data-g")); });
+/* ---------- Custom words from API ---------- */
+let CUSTOM = [];
+let busy = false;
+const mask = (s, w) => String(s).replace(new RegExp("\\b" + w + "\\b", "gi"), "_____");
 function pickWord(filter) {
-  const c = WORDS.filter(w => filter(SEED[w]) && w !== last);
-  const w = pick(c.length ? c : WORDS); last = w; return w;
+  const base = CUSTOM.length ? CUSTOM : WORDS;
+  const ok = base.filter(w => filter(SEED[w]));
+  if (!ok.length) return null;
+  const c = ok.filter(w => w !== last);
+  const w = pick(c.length ? c : ok);
+  last = w; return w;
 }
-
+function noData(msg) { $("#gBody").innerHTML = '<div class="msg">' + esc(msg) + '</div>'; }
+function setMsg(t) { $("#gwMsg").textContent = t; }
+function renderCustom() {
+  $("#gwList").innerHTML = CUSTOM.map(w => '<button type="button" class="chip" data-rm="' + esc(w) + '">' + esc(w) + ' ✕</button>').join("");
+  setMsg(CUSTOM.length
+    ? "Games ab sirf in " + CUSTOM.length + " word(s) se chalenge. Hatane ke liye word par tap karo."
+    : "Abhi built-in words active hain.");
+}
+async function addCustom(raw) {
+  const w = (raw || "").trim().toLowerCase();
+  if (!/^[a-z][a-z'-]*$/.test(w)) { setMsg("Sirf ek English word likho (letters only)."); return false; }
+  setMsg("Loading “" + w + "”…");
+  let r;
+  try { r = await lookup(w); } catch (e) { r = { found: false, reached: false }; }
+  if (!r.found) {
+    setMsg(r.reached ? "“" + w + "” nahi mila. Spelling check karo." : "API se connect nahi ho paya. Internet check karo.");
+    return false;
+  }
+  const d = r.data;
+  SEED[w] = { word: w, phonetic: d.phonetic, meanings: d.meanings, syn: d.syn, ant: d.ant };
+  if (!WORDS.includes(w)) WORDS.push(w);
+  d.syn.concat(d.ant, [w]).forEach(x => { if (!POOL.includes(x)) POOL.push(x); });
+  if (!CUSTOM.includes(w)) CUSTOM.push(w);
+  renderCustom();
+  setMsg("“" + w + "” load ho gaya (" + CUSTOM.length + " word active). Ab neeche koi game kholo.");
+  return true;
+}
+async function addRandom() {
+  const L = "abcdefghijklmnoprstw".split(""), V = "aeiou".split("");
+  for (let t = 0; t < 4; t++) {
+    try {
+      const j = await getJSON("https://api.datamuse.com/words?sp=" + pick(L) + pick(V) + "*&max=100", 8000);
+      const c = j.map(x => x.word).filter(x => /^[a-z]{5,9}$/.test(x) && !CUSTOM.includes(x));
+      if (c.length && await addCustom(pick(c))) return;
+    } catch (e) {}
+  }
+  setMsg("Random word nahi mil paya. Dobara try karo.");
+}
+const guard = fn => async () => { if (busy) return; busy = true; try { await fn(); } finally { busy = false; } };
+$("#gwLoad").addEventListener("click", guard(async () => { if (await addCustom($("#gw").value)) $("#gw").value = ""; }));
+$("#gw").addEventListener("keydown", e => { if (e.key === "Enter") $("#gwLoad").click(); });
+$("#gwRand").addEventListener("click", guard(addRandom));
+$("#gwReset").addEventListener("click", () => { CUSTOM = []; renderCustom(); });
+$("#gwList").addEventListener("click", e => {
+  const b = e.target.closest("[data-rm]");
+  if (b) { CUSTOM = CUSTOM.filter(x => x !== b.getAttribute("data-rm")); renderCustom(); }
+});
+renderCustom();
 function mcq(o) {
   const body = $("#gBody");
   body.innerHTML = '<p class="src">' + esc(o.label) + '</p><div class="q">' + o.question + '</div>' +
@@ -376,11 +444,12 @@ const GAMES = {
   anagram: {
     start() { shell("Anagram Scramble"); this.next(); },
     next() {
-      const w = pickWord(x => x.word.length >= 5);
+      const w = pickWord(x => x.word.length >= 4 && /^[a-z]+$/.test(x.word));
+      if (!w) return noData("Anagram ke liye 4+ letters ka word chahiye. Koi naya word load karo.");
       let s = w; for (let i = 0; i < 20 && s === w; i++) s = shuffle(w.split("")).join("");
       $("#gBody").innerHTML =
         '<p class="src">Unscramble the letters</p><div class="scr">' + esc(s.toUpperCase()) + '</div>' +
-        '<p class="ex">Hint: ' + esc(SEED[w].meanings[0].defs[0].d) + ' (' + w.length + ' letters)</p>' +
+        '<p class="ex">Hint: ' + esc(mask(SEED[w].meanings[0].defs[0].d, w)) + ' (' + w.length + ' letters)</p>' +
         '<div class="inline"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer"><button type="button" id="chk">Check</button></div>' +
         '<div class="fb" id="fb"></div><button type="button" id="skip">Reveal</button> <button type="button" id="nextBtn" class="hidden">Next →</button>';
       let done = false;
@@ -406,8 +475,9 @@ const GAMES = {
   syn: {
     start() { shell("Synonyms Match"); this.next(); },
     next() {
-      const w = pickWord(x => x.syn.length), e = SEED[w];
-      const answer = pick(e.syn);
+      const w = pickWord(x => x.syn.length);
+      if (!w) return noData("Loaded words ke synonyms nahi mile. Koi aur word load karo (jaise happy, brave, quick).");
+      const e = SEED[w], answer = pick(e.syn);
       mcq({ label: "Choose the synonym of", question: "<b>" + esc(w) + "</b>", answer,
         options: shuffle([answer].concat(distractors(e.syn.concat(e.ant, [w]), 3))),
         hint: "", next: () => GAMES.syn.next() });
@@ -416,8 +486,9 @@ const GAMES = {
   ant: {
     start() { shell("Antonyms Challenge"); this.next(); },
     next() {
-      const w = pickWord(x => x.ant.length), e = SEED[w];
-      const answer = pick(e.ant);
+      const w = pickWord(x => x.ant.length);
+      if (!w) return noData("Loaded words ke antonyms nahi mile. Koi aur word load karo (jaise happy, strong, begin).");
+      const e = SEED[w], answer = pick(e.ant);
       mcq({ label: "Choose the antonym of", question: "<b>" + esc(w) + "</b>", answer,
         options: shuffle([answer].concat(distractors(e.syn.concat(e.ant, [w]), 3))),
         hint: "", next: () => GAMES.ant.next() });
@@ -426,13 +497,17 @@ const GAMES = {
   fill: {
     start() { shell("Fill in the Blanks"); this.next(); },
     next() {
-      const w = pickWord(() => true), e = SEED[w];
-      const ex = e.meanings[0].defs[0].e;
-      const re = new RegExp("\\b" + w + "\\b", "i");
-      const sentence = ex.replace(re, "_____");
-      mcq({ label: "Choose the word that completes the sentence", question: esc(sentence), answer: w,
+      const w = pickWord(() => true);
+      if (!w) return noData("Koi word available nahi hai. Naya word load karo.");
+      const e = SEED[w], re = new RegExp("\\b" + w + "\\b", "i");
+      let ex = "";
+      e.meanings.forEach(m => m.defs.forEach(x => { if (!ex && x.e && re.test(x.e)) ex = x.e; }));
+      const def = e.meanings[0].defs[0].d;
+      const question = ex ? esc(ex.replace(re, "_____")) : esc(mask(def, w));
+      const hint = ex ? "Meaning: " + mask(def, w) : "Which word matches this meaning?";
+      mcq({ label: "Choose the word that completes the sentence", question, answer: w,
         options: shuffle([w].concat(shuffle(WORDS.filter(x => x !== w)).slice(0, 3))),
-        hint: "Meaning: " + e.meanings[0].defs[0].d, next: () => GAMES.fill.next() });
+        hint, next: () => GAMES.fill.next() });
     }
   }
 };
