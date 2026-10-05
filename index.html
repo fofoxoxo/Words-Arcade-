@@ -1,518 +1,359 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordArcade - Minimal Dictionary & Exam Prep</title>
-    <style>
-        :root {
-            --bg: #ffffff;
-            --text: #111111;
-            --border: #cccccc;
-            --subtext: #555555;
-            --card-bg: #f9f9f9;
-        }
-
-        [data-theme="dark"] {
-            --bg: #121212;
-            --text: #e0e0e0;
-            --border: #333333;
-            --subtext: #aaaaaa;
-            --card-bg: #1e1e1e;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 15px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--text);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
-
-        .theme-toggle {
-            background: none;
-            border: 1px solid var(--text);
-            color: var(--text);
-            padding: 4px 10px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        nav {
-            display: flex;
-            gap: 10px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 20px;
-        }
-
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--subtext);
-            padding: 8px 16px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-
-        .nav-btn.active {
-            color: var(--text);
-            border-bottom: 2px solid var(--text);
-        }
-
-        .page { display: none; }
-        .page.active { display: block; }
-
-        .search-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid var(--text);
-            background: var(--bg);
-            color: var(--text);
-            font-size: 1rem;
-            outline: none;
-        }
-
-        button.action-btn {
-            padding: 10px 20px;
-            background: var(--text);
-            color: var(--bg);
-            border: 1px solid var(--text);
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .phonetic-text {
-            font-family: monospace;
-            color: var(--subtext);
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-        }
-
-        .category-block {
-            border: 1px solid var(--border);
-            padding: 15px;
-            margin-bottom: 15px;
-            background: var(--card-bg);
-        }
-
-        .category-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 4px;
-            margin-bottom: 10px;
-        }
-
-        .tag {
-            display: inline-block;
-            border: 1px solid var(--text);
-            padding: 2px 8px;
-            font-size: 0.8rem;
-            margin: 3px;
-        }
-
-        .game-bar {
-            width: 100%;
-            padding: 15px;
-            border: 1px solid var(--text);
-            background: var(--card-bg);
-            color: var(--text);
-            text-align: left;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .game-container {
-            display: none;
-            border: 1px solid var(--text);
-            padding: 15px;
-            margin-top: 15px;
-            background: var(--card-bg);
-        }
-
-        .letter-tile {
-            display: inline-block;
-            border: 1px solid var(--text);
-            padding: 8px 14px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin: 4px;
-            background: var(--bg);
-        }
-
-        .option-btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid var(--text);
-            background: var(--bg);
-            color: var(--text);
-            font-size: 1rem;
-            font-weight: 600;
-            text-align: left;
-            cursor: pointer;
-        }
-
-        .option-btn:hover {
-            background: var(--border);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WordArcade</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#111111; --muted:#555555; --line:#111111; --soft:#f6f6f6; --hover:#eaeaea;
+  --ok:#111111; --serif:"Linux Libertine",Georgia,Times,"Times New Roman",serif;
+  --sans:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#111111; --fg:#ffffff; --muted:#bbbbbb; --line:#ffffff; --soft:#1b1b1b; --hover:#2a2a2a; --ok:#ffffff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.55}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:2px solid var(--line)}
+header h1{margin:0;font-family:var(--serif);font-weight:normal;font-size:1.7rem;letter-spacing:.2px}
+header h1 span{font-size:.8rem;color:var(--muted);font-family:var(--sans);margin-left:8px}
+button{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:0;cursor:pointer;padding:8px 14px}
+button:hover:not(:disabled){background:var(--hover)}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+#themeBtn{padding:6px 12px;font-size:.9rem}
+nav{display:flex;border-bottom:1px solid var(--line)}
+nav button{flex:1;border:0;border-right:1px solid var(--line);padding:12px;font-weight:bold}
+nav button:last-child{border-right:0}
+nav button[aria-selected="true"]{background:var(--fg);color:var(--bg)}
+main{max-width:820px;margin:0 auto;padding:18px 16px 60px}
+.search{display:flex;gap:0;margin-bottom:18px}
+.search input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--line);border-right:0;background:var(--bg);color:var(--fg);border-radius:0}
+h2{font-family:var(--serif);font-weight:normal;font-size:1.45rem;border-bottom:1px solid var(--line);padding-bottom:3px;margin:26px 0 10px}
+h3{font-size:1rem;margin:14px 0 4px;font-style:italic}
+.title{font-family:var(--serif);font-size:2.1rem;margin:0 0 4px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.src{font-size:.8rem;color:var(--muted);margin:4px 0 0}
+ol,ul{margin:6px 0 6px 1.3rem;padding:0}
+li{margin:4px 0}
+.ex{font-style:italic;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:3px 10px;font-size:.9rem}
+.box{border:1px solid var(--line);background:var(--soft);padding:12px 14px;margin-top:6px}
+.msg{border:1px solid var(--line);padding:14px;background:var(--soft)}
+.row{display:flex;width:100%;align-items:center;gap:14px;text-align:left;padding:16px;border:1px solid var(--line);border-bottom:0;background:var(--bg)}
+.row:last-of-type{border-bottom:1px solid var(--line)}
+.row .n{font-family:var(--serif);font-size:1.5rem;width:1.6rem}
+.row b{display:block;font-size:1.05rem}
+.row small{color:var(--muted)}
+.gh{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--line);padding-bottom:8px;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.gh h2{margin:0;border:0;padding:0}
+.score{font-size:.9rem}
+.q{font-family:var(--serif);font-size:1.6rem;margin:10px 0 4px}
+.scr{font-family:monospace;font-size:2rem;letter-spacing:.4rem;margin:10px 0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.opts button{padding:12px}
+.opts button.right{background:var(--fg);color:var(--bg);font-weight:bold}
+.opts button.wrong{text-decoration:line-through;opacity:.6}
+.fb{min-height:1.6em;margin:8px 0;font-weight:bold}
+.inline{display:flex;gap:8px;margin:10px 0}
+.inline input{flex:1;min-width:0;font:inherit;padding:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:0}
+.hidden{display:none}
+@media(max-width:480px){.opts{grid-template-columns:1fr}.title{font-size:1.7rem}}
+</style>
 </head>
 <body>
-
-    <header>
-        <h1>WordArcade</h1>
-        <button class="theme-toggle" onclick="toggleTheme()">Theme: Dark/Light</button>
-    </header>
-
-    <nav>
-        <button class="nav-btn active" onclick="switchPage('search-page', this)">Search Word</button>
-        <button class="nav-btn" onclick="switchPage('games-page', this)">Arcade Games</button>
-    </nav>
-
-    <!-- PAGE 1: DICTIONARY SEARCH -->
-    <div id="search-page" class="page active">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search word (e.g. resilient, fragile)...">
-            <button class="action-btn" onclick="searchWord()">Search</button>
-        </div>
-
-        <div id="resultOutput"></div>
+<header>
+  <h1>WordArcade<span>The free word game</span></h1>
+  <button id="themeBtn" type="button" aria-label="Toggle dark mode">Dark mode</button>
+</header>
+<nav role="tablist">
+  <button role="tab" id="tabSearch" aria-selected="true" type="button">Word Search</button>
+  <button role="tab" id="tabGames" aria-selected="false" type="button">Arcade Games</button>
+</nav>
+<main>
+  <section id="viewSearch">
+    <div class="search">
+      <input id="q" type="search" placeholder="Search a word, e.g. resilient" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search word">
+      <button id="goBtn" type="button">Search</button>
     </div>
-
-    <!-- PAGE 2: GAMES SELECTION -->
-    <div id="games-page" class="page">
-        <div class="game-bar" onclick="startAnagramGame()">
-            <span>1. Anagram Scramble (Definition Clue)</span>
-            <span>&rarr;</span>
-        </div>
-        <div class="game-bar" onclick="startSynonymGame()">
-            <span>2. Synonyms Match</span>
-            <span>&rarr;</span>
-        </div>
-        <div class="game-bar" onclick="startAntonymGame()">
-            <span>3. Antonyms Challenge</span>
-            <span>&rarr;</span>
-        </div>
-        <div class="game-bar" onclick="startFillBlankGame()">
-            <span>4. Fill in the Blanks</span>
-            <span>&rarr;</span>
-        </div>
-
-        <!-- Universal Game Arena Container -->
-        <div id="gameArena" class="game-container">
-            <button class="action-btn" style="float: right;" onclick="closeGame()">Close Game</button>
-            <h2 id="gameTitle" style="margin-bottom: 10px;">Game Arena</h2>
-            
-            <div class="category-block">
-                <div id="gameClueHeader" class="category-title">Clue</div>
-                <p id="gameClueText">Search words on Search Page to populate game data!</p>
-                <p id="gameSubClue" class="phonetic-text" style="margin-top:5px;"></p>
-            </div>
-
-            <!-- Custom Controls based on Active Game -->
-            <div id="gameDynamicContent"></div>
-
-            <p id="gameFeedback" style="font-weight: bold; margin-top: 10px;"></p>
-        </div>
+    <div id="result"><div class="msg">Enter a word above to see its pronunciation, definitions, examples and thesaurus entries. Try <a href="#" data-w="hello">hello</a>, <a href="#" data-w="resilient">resilient</a> or <a href="#" data-w="dynamic">dynamic</a>.</div></div>
+  </section>
+  <section id="viewGames" class="hidden">
+    <div id="gameList">
+      <h2 style="margin-top:0">Arcade Games</h2>
+      <button class="row" data-g="anagram" type="button"><span class="n">1</span><span><b>Anagram Scramble</b><small>Unscramble the letters to find the word.</small></span></button>
+      <button class="row" data-g="syn" type="button"><span class="n">2</span><span><b>Synonyms Match</b><small>Pick the word with the same meaning.</small></span></button>
+      <button class="row" data-g="ant" type="button"><span class="n">3</span><span><b>Antonyms Challenge</b><small>Pick the word with the opposite meaning.</small></span></button>
+      <button class="row" data-g="fill" type="button"><span class="n">4</span><span><b>Fill in the Blanks</b><small>Complete the sentence with the right word.</small></span></button>
     </div>
+    <div id="gameBox" class="hidden"></div>
+  </section>
+</main>
 
-    <script>
-        let currentWordData = null;
-        // Default Seed Words Data taaki bina initial search ke bhi games active banein
-        const defaultSeedWords = [
-            {
-                word: "resilient",
-                phonetic: "/rɪˈzɪl.jənt/",
-                meanings: [{
-                    partOfSpeech: "adjective",
-                    definitions: [{ definition: "Able to withstand or recover quickly from difficult conditions.", example: "He showed a resilient attitude." }],
-                    synonyms: ["tough", "adaptable", "hardy"],
-                    antonyms: ["fragile", "vulnerable"]
-                }]
-            },
-            {
-                word: "fragile",
-                phonetic: "/ˈfrædʒ.aɪl/",
-                meanings: [{
-                    partOfSpeech: "adjective",
-                    definitions: [{ definition: "Easily broken or damaged.", example: "Handle the fragile package with care." }],
-                    synonyms: ["delicate", "brittle"],
-                    antonyms: ["strong", "robust"]
-                }]
-            }
-        ];
+<script>
+"use strict";
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const uniq = a => [...new Set(a.filter(Boolean))];
 
-        let savedWords = JSON.parse(localStorage.getItem('wordarcade_saved_words') || JSON.stringify(defaultSeedWords));
+/* ---------- Theme ---------- */
+const root = document.documentElement;
+function setTheme(t) {
+  root.setAttribute("data-theme", t);
+  $("#themeBtn").textContent = t === "dark" ? "Light mode" : "Dark mode";
+  try { localStorage.setItem("wa-theme", t); } catch (e) {}
+}
+(function initTheme() {
+  let t = null;
+  try { t = localStorage.getItem("wa-theme"); } catch (e) {}
+  if (!t) t = (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  setTheme(t);
+})();
+$("#themeBtn").addEventListener("click", () => setTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark"));
 
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-        }
+/* ---------- Tabs ---------- */
+function showTab(which) {
+  const s = which === "search";
+  $("#viewSearch").classList.toggle("hidden", !s);
+  $("#viewGames").classList.toggle("hidden", s);
+  $("#tabSearch").setAttribute("aria-selected", s);
+  $("#tabGames").setAttribute("aria-selected", !s);
+}
+$("#tabSearch").addEventListener("click", () => showTab("search"));
+$("#tabGames").addEventListener("click", () => showTab("games"));
 
-        function switchPage(pageId, btn) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            btn.classList.add('active');
-        }
+/* ---------- Local seed dictionary (offline fallback) ----------
+   [word, phonetic, pos, definition, example, synonyms, antonyms] */
+const RAW = [
+ ["hello","/həˈloʊ/","interjection","Used as a greeting or to begin a phone conversation.","Hello, how are you today?",["hi","greetings","hey"],["goodbye","farewell"]],
+ ["world","/wɜːrld/","noun","The earth, together with all of its countries and peoples.","She dreams of traveling the world.",["earth","globe","planet"],[]],
+ ["resilient","/rɪˈzɪliənt/","adjective","Able to recover quickly from difficulties; tough.","The resilient town rebuilt quickly after the flood.",["tough","flexible","hardy"],["fragile","brittle"]],
+ ["fragile","/ˈfrædʒəl/","adjective","Easily broken or damaged.","Pack the fragile glasses carefully.",["delicate","brittle","breakable"],["sturdy","durable"]],
+ ["dynamic","/daɪˈnæmɪk/","adjective","Characterized by constant change, activity, or progress.","She leads a dynamic team that adapts fast.",["energetic","vigorous","lively"],["static","inactive"]],
+ ["ancient","/ˈeɪnʃənt/","adjective","Belonging to the very distant past.","They explored the ancient ruins at dawn.",["old","archaic","antique"],["modern","new"]],
+ ["brave","/breɪv/","adjective","Ready to face danger or pain without showing fear.","The brave firefighter entered the building.",["courageous","bold","fearless"],["cowardly","timid"]],
+ ["quiet","/ˈkwaɪət/","adjective","Making little or no noise.","The library was quiet in the morning.",["silent","hushed","still"],["loud","noisy"]],
+ ["bright","/braɪt/","adjective","Giving out or reflecting much light; shining.","A bright moon lit the path.",["shining","brilliant","radiant"],["dim","dull"]],
+ ["simple","/ˈsɪmpəl/","adjective","Easily understood or done; not complicated.","The instructions were simple to follow.",["easy","plain","basic"],["complex","complicated"]],
+ ["rapid","/ˈræpɪd/","adjective","Happening in a short time or at great speed.","The patient made a rapid recovery.",["swift","quick","fast"],["slow","gradual"]],
+ ["generous","/ˈdʒɛnərəs/","adjective","Showing readiness to give more than is expected.","He was generous with his time.",["giving","charitable","lavish"],["stingy","selfish"]],
+ ["honest","/ˈɒnɪst/","adjective","Free of deceit; truthful and sincere.","She gave an honest answer.",["truthful","sincere","candid"],["dishonest","deceitful"]],
+ ["gentle","/ˈdʒɛntəl/","adjective","Mild in temperament or behavior; kind.","Use a gentle touch with the kitten.",["mild","tender","soft"],["harsh","rough"]],
+ ["abundant","/əˈbʌndənt/","adjective","Existing in large quantities; plentiful.","The valley has abundant fresh water.",["plentiful","ample","copious"],["scarce","sparse"]],
+ ["calm","/kɑːm/","adjective","Not showing nervousness, anger, or other strong emotions.","Stay calm and breathe slowly.",["peaceful","serene","relaxed"],["agitated","anxious"]],
+ ["create","/kriˈeɪt/","verb","To bring something into existence.","Artists create work that moves people.",["make","build","produce"],["destroy","demolish"]],
+ ["begin","/bɪˈɡɪn/","verb","To start; to perform the first part of an action.","Classes begin at nine o'clock.",["start","commence","launch"],["end","finish"]],
+ ["victory","/ˈvɪktəri/","noun","An act of defeating an opponent or enemy.","The team celebrated their victory.",["triumph","win","conquest"],["defeat","loss"]],
+ ["journey","/ˈdʒɜːrni/","noun","An act of traveling from one place to another.","The journey took three days by train.",["trip","voyage","trek"],[]],
+ ["curious","/ˈkjʊəriəs/","adjective","Eager to know or learn something.","The curious child asked many questions.",["inquisitive","interested","eager"],["indifferent","apathetic"]],
+ ["strong","/strɒŋ/","adjective","Having the power to resist force or carry heavy weights.","A strong bridge spans the river.",["powerful","sturdy","robust"],["weak","feeble"]],
+ ["happy","/ˈhæpi/","adjective","Feeling or showing pleasure or contentment.","The happy crowd cheered loudly.",["joyful","cheerful","content"],["sad","miserable"]],
+ ["silent","/ˈsaɪlənt/","adjective","Not making or accompanied by any sound.","The silent forest felt endless.",["quiet","mute","noiseless"],["noisy","loud"]]
+];
+const SEED = {};
+RAW.forEach(r => { SEED[r[0]] = { word: r[0], phonetic: r[1], meanings: [{ pos: r[2], defs: [{ d: r[3], e: r[4] }] }], syn: r[5], ant: r[6] }; });
+const WORDS = Object.keys(SEED);
 
-        async function searchWord(query = null) {
-            const word = query || document.getElementById('searchInput').value.trim();
-            if (!word) return;
+/* ---------- Network ---------- */
+async function getJSON(url, ms) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms || 6000);
+  try {
+    const res = await fetch(url, { signal: ctl.signal });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  } finally { clearTimeout(t); }
+}
+async function fetchApi(w) {
+  const j = await getJSON("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(w), 6000);
+  if (!Array.isArray(j) || !j.length) throw new Error("empty");
+  let phonetic = "", syn = [], ant = [];
+  const meanings = [];
+  j.forEach(entry => {
+    if (!phonetic) phonetic = entry.phonetic || ((entry.phonetics || []).find(p => p.text) || {}).text || "";
+    (entry.meanings || []).forEach(m => {
+      syn = syn.concat(m.synonyms || []); ant = ant.concat(m.antonyms || []);
+      const defs = (m.definitions || []).slice(0, 4).map(d => {
+        syn = syn.concat(d.synonyms || []); ant = ant.concat(d.antonyms || []);
+        return { d: d.definition, e: d.example || "" };
+      });
+      if (defs.length) meanings.push({ pos: m.partOfSpeech || "", defs });
+    });
+  });
+  if (!meanings.length) throw new Error("no meanings");
+  syn = uniq(syn); ant = uniq(ant);
+  // Datamuse thesaurus supplement (optional)
+  if (syn.length < 3 || !ant.length) {
+    const [s, a] = await Promise.allSettled([
+      getJSON("https://api.datamuse.com/words?rel_syn=" + encodeURIComponent(w) + "&max=10", 4000),
+      getJSON("https://api.datamuse.com/words?rel_ant=" + encodeURIComponent(w) + "&max=10", 4000)
+    ]);
+    if (s.status === "fulfilled") syn = uniq(syn.concat(s.value.map(x => x.word)));
+    if (a.status === "fulfilled") ant = uniq(ant.concat(a.value.map(x => x.word)));
+  }
+  return { word: w, phonetic, meanings, syn: syn.slice(0, 12), ant: ant.slice(0, 12) };
+}
+async function lookup(w) {
+  try { return { data: await fetchApi(w), source: "Free Dictionary API" }; } catch (e) {}
+  if (SEED[w]) return { data: SEED[w], source: "Local seed dictionary (offline)" };
+  return null;
+}
 
-            const output = document.getElementById('resultOutput');
-            output.innerHTML = "<p>Searching dictionary...</p>";
+/* ---------- Word Search ---------- */
+function chips(list) {
+  return '<div class="chips">' + list.map(x => '<button type="button" class="chip" data-w="' + esc(x) + '">' + esc(x) + '</button>').join("") + "</div>";
+}
+function render(r) {
+  const d = r.data;
+  const poss = uniq(d.meanings.map(m => m.pos));
+  const examples = [];
+  d.meanings.forEach(m => m.defs.forEach(x => { if (x.e) examples.push(x.e); }));
+  let html = '<h1 class="title">' + esc(d.word) + '</h1><p class="src">Source: ' + esc(r.source) + '</p>';
+  html += '<h2>Phonetic Pronunciation</h2><p>' + (d.phonetic ? esc(d.phonetic) : "Not available.") + '</p>';
+  html += '<h2>Part of Speech / Grammatical Identity</h2><p>' + (poss.length ? poss.map(esc).join(", ") : "Not available.") + '</p>';
+  html += '<h2>Definitions</h2>';
+  d.meanings.forEach(m => {
+    html += '<h3>' + esc(m.pos || "definition") + '</h3><ol>' + m.defs.map(x => '<li>' + esc(x.d) + '</li>').join("") + '</ol>';
+  });
+  html += '<h2>Example Usage</h2>' + (examples.length ? '<ul>' + examples.map(e => '<li class="ex">' + esc(e) + '</li>').join("") + '</ul>' : '<p>No examples available.</p>');
+  html += '<h2>Synonyms</h2>' + (d.syn.length ? chips(d.syn) : '<p>None found.</p>');
+  html += '<h2>Antonyms / Thesaurus</h2>' + (d.ant.length ? chips(d.ant) : '<p>None found.</p>');
+  $("#result").innerHTML = html;
+}
+let searchId = 0;
+async function search(w) {
+  w = (w || "").trim().toLowerCase();
+  if (!w) return;
+  $("#q").value = w;
+  const id = ++searchId;
+  $("#result").innerHTML = '<div class="msg">Searching for “' + esc(w) + '”…</div>';
+  const r = await lookup(w);
+  if (id !== searchId) return;
+  if (r) render(r);
+  else $("#result").innerHTML = '<div class="msg">No entry found for “' + esc(w) + '”. Check the spelling, or you may be offline. Try one of: ' + WORDS.slice(0, 8).map(esc).join(", ") + '.</div>';
+}
+$("#goBtn").addEventListener("click", () => search($("#q").value));
+$("#q").addEventListener("keydown", e => { if (e.key === "Enter") search($("#q").value); });
+$("#result").addEventListener("click", e => {
+  const el = e.target.closest("[data-w]");
+  if (el) { e.preventDefault(); search(el.getAttribute("data-w")); }
+});
 
-            try {
-                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-                if (!res.ok) throw new Error("Word not found");
-                const data = await res.json();
-                
-                currentWordData = data[0];
-                saveToLocalStorage(currentWordData);
-                renderDictionaryOutput(currentWordData);
+/* ---------- Games ---------- */
+const box = $("#gameBox"), list = $("#gameList");
+let cur = null, score = 0, total = 0, last = "";
+const POOL = uniq(WORDS.concat(...RAW.map(r => r[5]), ...RAW.map(r => r[6])));
 
-            } catch (err) {
-                output.innerHTML = `<p style="color:red;">No entry found for "${word}". Try another word.</p>`;
-            }
-        }
+function shell(title) {
+  box.innerHTML = '<div class="gh"><h2>' + esc(title) + '</h2><span class="score" id="score"></span><button type="button" id="backBtn">← All games</button></div><div id="gBody"></div>';
+  $("#backBtn").addEventListener("click", closeGame);
+  updScore();
+}
+function updScore() { const s = $("#score"); if (s) s.textContent = "Score: " + score + " / " + total; }
+function openGame(id) {
+  cur = id; score = 0; total = 0; last = "";
+  list.classList.add("hidden"); box.classList.remove("hidden");
+  GAMES[id].start();
+}
+function closeGame() { box.classList.add("hidden"); list.classList.remove("hidden"); box.innerHTML = ""; cur = null; }
+list.addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b) openGame(b.getAttribute("data-g")); });
+function pickWord(filter) {
+  const c = WORDS.filter(w => filter(SEED[w]) && w !== last);
+  const w = pick(c.length ? c : WORDS); last = w; return w;
+}
 
-        function saveToLocalStorage(data) {
-            if (!savedWords.some(w => w.word.toLowerCase() === data.word.toLowerCase())) {
-                savedWords.push(data);
-                localStorage.setItem('wordarcade_saved_words', JSON.stringify(savedWords));
-            }
-        }
+/* Generic multiple-choice round */
+function mcq(o) {
+  const body = $("#gBody");
+  body.innerHTML = '<p class="src">' + esc(o.label) + '</p><div class="q">' + o.question + '</div>' +
+    (o.hint ? '<p class="ex">' + esc(o.hint) + '</p>' : "") +
+    '<div class="opts">' + o.options.map(x => '<button type="button" data-o="' + esc(x) + '">' + esc(x) + '</button>').join("") + '</div>' +
+    '<div class="fb" id="fb"></div><button type="button" id="nextBtn" class="hidden">Next →</button>';
+  body.querySelectorAll("[data-o]").forEach(b => b.addEventListener("click", () => {
+    const ok = b.getAttribute("data-o") === o.answer;
+    total++; if (ok) score++;
+    body.querySelectorAll("[data-o]").forEach(x => {
+      x.disabled = true;
+      if (x.getAttribute("data-o") === o.answer) x.classList.add("right");
+      else if (x === b) x.classList.add("wrong");
+    });
+    $("#fb").textContent = ok ? "Correct!" : "Incorrect. The answer is “" + o.answer + "”.";
+    $("#nextBtn").classList.remove("hidden"); $("#nextBtn").focus();
+    updScore();
+  }));
+  $("#nextBtn").addEventListener("click", o.next);
+}
+function distractors(exclude, n) { return shuffle(POOL.filter(x => !exclude.includes(x))).slice(0, n); }
 
-        function renderDictionaryOutput(data) {
-            const phonetic = data.phonetic || (data.phonetics && data.phonetics.find(p => p.text)?.text) || "N/A";
-            
-            let html = `
-                <h2 style="font-size: 2rem;">${data.word}</h2>
-                <div class="phonetic-text">Text Pronunciation: ${phonetic}</div>
-            `;
-
-            data.meanings.forEach(m => {
-                const synonyms = m.synonyms.length ? m.synonyms.map(s => `<span class="tag">${s}</span>`).join('') : "None";
-                const antonyms = m.antonyms.length ? m.antonyms.map(a => `<span class="tag">${a}</span>`).join('') : "None";
-
-                html += `
-                    <div class="category-block">
-                        <div class="category-title">Grammatical Identity: ${m.partOfSpeech}</div>
-                        <p><strong>Definition:</strong> ${m.definitions[0].definition}</p>
-                        ${m.definitions[0].example ? `<p><strong>Example:</strong> "<em>${m.definitions[0].example}</em>"</p>` : ''}
-                        
-                        <div style="margin-top: 10px;">
-                            <strong>Synonyms:</strong> ${synonyms}
-                        </div>
-                        <div style="margin-top: 5px;">
-                            <strong>Antonyms / Thesaurus:</strong> ${antonyms}
-                        </div>
-                    </div>
-                `;
-            });
-
-            document.getElementById('resultOutput').innerHTML = html;
-        }
-
-        function getActiveWordData() {
-            return currentWordData || savedWords[Math.floor(Math.random() * savedWords.length)];
-        }
-
-        // --- GAME 1: ANAGRAM SCRAMBLE ---
-        function startAnagramGame() {
-            const activeData = getActiveWordData();
-            document.getElementById('gameArena').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "Anagram Scramble";
-            document.getElementById('gameClueHeader').innerText = "Definition Clue";
-
-            const target = activeData.word.toUpperCase();
-            const def = activeData.meanings[0].definitions[0].definition;
-            const phon = activeData.phonetic || (activeData.phonetics && activeData.phonetics[0]?.text) || "";
-
-            document.getElementById('gameClueText').innerText = def;
-            document.getElementById('gameSubClue').innerText = `Pronunciation: ${phon}`;
-
-            let shuffled = target.split('').sort(() => Math.random() - 0.5).join('');
-            let tilesHtml = shuffled.split('').map(l => `<span class="letter-tile">${l}</span>`).join('');
-
-            document.getElementById('gameDynamicContent').innerHTML = `
-                <div style="margin-bottom: 15px;">
-                    <p style="font-size: 0.9rem; font-weight: 600;">Scrambled Letters:</p>
-                    <div>${tilesHtml}</div>
-                </div>
-                <div class="search-box">
-                    <input type="text" id="gameInput" placeholder="Type formed word...">
-                    <button class="action-btn" onclick="checkAnagramAnswer('${target}')">Submit</button>
-                </div>
-            `;
-            document.getElementById('gameFeedback').innerText = "";
-        }
-
-        function checkAnagramAnswer(correct) {
-            const ans = document.getElementById('gameInput').value.trim().toUpperCase();
-            const feedback = document.getElementById('gameFeedback');
-            if (ans === correct) {
-                feedback.style.color = "green";
-                feedback.innerText = "✓ Correct Word Solved!";
-            } else {
-                feedback.style.color = "red";
-                feedback.innerText = "✗ Incorrect! Try again.";
-            }
-        }
-
-        // --- GAME 2: SYNONYMS MATCH ---
-        function startSynonymGame() {
-            document.getElementById('gameArena').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "Synonyms Match";
-
-            const validWords = savedWords.filter(w => w.meanings.some(m => m.synonyms && m.synonyms.length > 0));
-            if (!validWords.length) {
-                document.getElementById('gameClueText').innerText = "Search words like 'resilient' or 'fragile' to generate synonym challenges!";
-                return;
-            }
-
-            const activeData = validWords[Math.floor(Math.random() * validWords.length)];
-            const targetWord = activeData.word.toUpperCase();
-            const meaningObj = activeData.meanings.find(m => m.synonyms.length > 0);
-            const correctSynonym = meaningObj.synonyms[0];
-
-            document.getElementById('gameClueHeader').innerText = "Target Word";
-            document.getElementById('gameClueText').innerText = `Find Synonym for: ${targetWord}`;
-            document.getElementById('gameSubClue').innerText = `Part of Speech: ${meaningObj.partOfSpeech}`;
-
-            let distractors = ["obvious", "rapid", "silent", "obscure", "vivid", "dense"];
-            let options = [correctSynonym, ...distractors.sort(() => Math.random() - 0.5).slice(0, 3)];
-            options.sort(() => Math.random() - 0.5);
-
-            let optionsHtml = options.map(opt => `
-                <button class="option-btn" onclick="checkOptionAnswer('${opt}', '${correctSynonym}')">${opt}</button>
-            `).join('');
-
-            document.getElementById('gameDynamicContent').innerHTML = optionsHtml;
-            document.getElementById('gameFeedback').innerText = "";
-        }
-
-        // --- GAME 3: ANTONYMS CHALLENGE ---
-        function startAntonymGame() {
-            document.getElementById('gameArena').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "Antonyms Challenge";
-
-            const validWords = savedWords.filter(w => w.meanings.some(m => m.antonyms && m.antonyms.length > 0));
-            if (!validWords.length) {
-                document.getElementById('gameClueText').innerText = "Search words with antonyms (e.g., 'fragile') to activate this mode!";
-                return;
-            }
-
-            const activeData = validWords[Math.floor(Math.random() * validWords.length)];
-            const targetWord = activeData.word.toUpperCase();
-            const meaningObj = activeData.meanings.find(m => m.antonyms.length > 0);
-            const correctAntonym = meaningObj.antonyms[0];
-
-            document.getElementById('gameClueHeader').innerText = "Target Word";
-            document.getElementById('gameClueText').innerText = `Find Opposite (Antonym) for: ${targetWord}`;
-            document.getElementById('gameSubClue').innerText = `Part of Speech: ${meaningObj.partOfSpeech}`;
-
-            let distractors = ["gentle", "complex", "frequent", "narrow", "vague"];
-            let options = [correctAntonym, ...distractors.sort(() => Math.random() - 0.5).slice(0, 3)];
-            options.sort(() => Math.random() - 0.5);
-
-            let optionsHtml = options.map(opt => `
-                <button class="option-btn" onclick="checkOptionAnswer('${opt}', '${correctAntonym}')">${opt}</button>
-            `).join('');
-
-            document.getElementById('gameDynamicContent').innerHTML = optionsHtml;
-            document.getElementById('gameFeedback').innerText = "";
-        }
-
-        // --- GAME 4: FILL IN THE BLANKS ---
-        function startFillBlankGame() {
-            document.getElementById('gameArena').style.display = 'block';
-            document.getElementById('gameTitle').innerText = "Fill in the Blanks";
-
-            const validWords = savedWords.filter(w => w.meanings.some(m => m.definitions.some(d => d.example)));
-            if (!validWords.length) {
-                document.getElementById('gameClueText').innerText = "Search words that contain example sentences to unlock Cloze Test!";
-                return;
-            }
-
-            const activeData = validWords[Math.floor(Math.random() * validWords.length)];
-            const targetWord = activeData.word;
-            let exampleSentence = "";
-
-            activeData.meanings.forEach(m => {
-                m.definitions.forEach(d => {
-                    if (d.example && !exampleSentence) exampleSentence = d.example;
-                });
-            });
-
-            // Replace word in sentence with blank
-            const regex = new RegExp(targetWord, "gi");
-            const maskedSentence = exampleSentence.replace(regex, "________");
-
-            document.getElementById('gameClueHeader').innerText = "Sentence Context";
-            document.getElementById('gameClueText').innerText = `"${maskedSentence}"`;
-            document.getElementById('gameSubClue').innerText = "Choose the correct word that fits the sentence context.";
-
-            let distractors = ["resilient", "fragile", "dynamic", "silent", "obscure"];
-            let options = [targetWord, ...distractors.filter(d => d !== targetWord).slice(0, 3)];
-            options.sort(() => Math.random() - 0.5);
-
-            let optionsHtml = options.map(opt => `
-                <button class="option-btn" onclick="checkOptionAnswer('${opt}', '${targetWord}')">${opt}</button>
-            `).join('');
-
-            document.getElementById('gameDynamicContent').innerHTML = optionsHtml;
-            document.getElementById('gameFeedback').innerText = "";
-        }
-
-        function checkOptionAnswer(selected, correct) {
-            const feedback = document.getElementById('gameFeedback');
-            if (selected.toLowerCase() === correct.toLowerCase()) {
-                feedback.style.color = "green";
-                feedback.innerText = "✓ Correct Answer!";
-            } else {
-                feedback.style.color = "red";
-                feedback.innerText = `✗ Incorrect. Correct answer was: ${correct}`;
-            }
-        }
-
-        function closeGame() {
-            document.getElementById('gameArena').style.display = 'none';
-        }
-    </script>
+const GAMES = {
+  anagram: {
+    start() { shell("Anagram Scramble"); this.next(); },
+    next() {
+      const w = pickWord(x => x.word.length >= 5);
+      let s = w; for (let i = 0; i < 20 && s === w; i++) s = shuffle(w.split("")).join("");
+      $("#gBody").innerHTML =
+        '<p class="src">Unscramble the letters</p><div class="scr">' + esc(s.toUpperCase()) + '</div>' +
+        '<p class="ex">Hint: ' + esc(SEED[w].meanings[0].defs[0].d) + ' (' + w.length + ' letters)</p>' +
+        '<div class="inline"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer"><button type="button" id="chk">Check</button></div>' +
+        '<div class="fb" id="fb"></div><button type="button" id="skip">Reveal</button> <button type="button" id="nextBtn" class="hidden">Next →</button>';
+      let done = false;
+      const finish = ok => {
+        done = true; total++; if (ok) score++; updScore();
+        $("#ans").disabled = true; $("#chk").disabled = true; $("#skip").classList.add("hidden");
+        $("#nextBtn").classList.remove("hidden"); $("#nextBtn").focus();
+      };
+      const check = () => {
+        if (done) return;
+        const v = $("#ans").value.trim().toLowerCase();
+        if (!v) return;
+        if (v === w) { $("#fb").textContent = "Correct!"; finish(true); }
+        else $("#fb").textContent = "Not quite. Try again.";
+      };
+      $("#chk").addEventListener("click", check);
+      $("#ans").addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+      $("#skip").addEventListener("click", () => { $("#fb").textContent = "The word was “" + w + "”."; finish(false); });
+      $("#nextBtn").addEventListener("click", () => GAMES.anagram.next());
+      $("#ans").focus();
+    }
+  },
+  syn: {
+    start() { shell("Synonyms Match"); this.next(); },
+    next() {
+      const w = pickWord(x => x.syn.length), e = SEED[w];
+      const answer = pick(e.syn);
+      mcq({ label: "Choose the synonym of", question: "<b>" + esc(w) + "</b>", answer,
+        options: shuffle([answer].concat(distractors(e.syn.concat(e.ant, [w]), 3))),
+        hint: "", next: () => GAMES.syn.next() });
+    }
+  },
+  ant: {
+    start() { shell("Antonyms Challenge"); this.next(); },
+    next() {
+      const w = pickWord(x => x.ant.length), e = SEED[w];
+      const answer = pick(e.ant);
+      mcq({ label: "Choose the antonym of", question: "<b>" + esc(w) + "</b>", answer,
+        options: shuffle([answer].concat(distractors(e.syn.concat(e.ant, [w]), 3))),
+        hint: "", next: () => GAMES.ant.next() });
+    }
+  },
+  fill: {
+    start() { shell("Fill in the Blanks"); this.next(); },
+    next() {
+      const w = pickWord(() => true), e = SEED[w];
+      const ex = e.meanings[0].defs[0].e;
+      const re = new RegExp("\\b" + w + "\\b", "i");
+      const sentence = ex.replace(re, "_____");
+      mcq({ label: "Choose the word that completes the sentence", question: esc(sentence), answer: w,
+        options: shuffle([w].concat(shuffle(WORDS.filter(x => x !== w)).slice(0, 3))),
+        hint: "Meaning: " + e.meanings[0].defs[0].d, next: () => GAMES.fill.next() });
+    }
+  }
+};
+</script>
 </body>
 </html>
