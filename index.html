@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexiCore - Minimal Dictionary & Arcade</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111111;
+            --border: #cccccc;
+            --subtext: #555555;
+            --card-bg: #f9f9f9;
+        }
+
+        [data-theme="dark"] {
+            --bg: #121212;
+            --text: #e0e0e0;
+            --border: #333333;
+            --subtext: #aaaaaa;
+            --card-bg: #1e1e1e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        /* Header Layout */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--text);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--text);
+            color: var(--text);
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Navigation Bar */
+        nav {
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--subtext);
+            padding: 8px 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-btn.active {
+            color: var(--text);
+            border-bottom: 2px solid var(--text);
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Word Search Controls */
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--text);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        button.action-btn {
+            padding: 10px 20px;
+            background: var(--text);
+            color: var(--bg);
+            border: 1px solid var(--text);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Category Output Styling */
+        .phonetic-text {
+            font-family: monospace;
+            color: var(--subtext);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .category-block {
+            border: 1px solid var(--border);
+            padding: 15px;
+            margin-bottom: 15px;
+            background: var(--card-bg);
+        }
+
+        .category-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+        }
+
+        .tag {
+            display: inline-block;
+            border: 1px solid var(--text);
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            margin: 3px;
+        }
+
+        /* Games List (Bars View) */
+        .game-bar {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--text);
+            background: var(--card-bg);
+            color: var(--text);
+            text-align: left;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Mini Game Container */
+        .game-container {
+            display: none;
+            border: 1px solid var(--text);
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .letter-tile {
+            display: inline-block;
+            border: 1px solid var(--text);
+            padding: 8px 14px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>LexiCore</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">Theme: Dark/Light</button>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="switchPage('search-page', this)">Search Word</button>
+        <button class="nav-btn" onclick="switchPage('games-page', this)">Arcade Games</button>
+    </nav>
+
+    <!-- PAGE 1: DICTIONARY SEARCH -->
+    <div id="search-page" class="page active">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Enter word (e.g. resilient, silent)...">
+            <button class="action-btn" onclick="searchWord()">Search</button>
+        </div>
+
+        <div id="resultOutput"></div>
+    </div>
+
+    <!-- PAGE 2: GAMES SELECTION -->
+    <div id="games-page" class="page">
+        <div class="game-bar" onclick="startAnagramGame()">
+            <span>1. Anagram Scramble (Definition Clue)</span>
+            <span>&rarr;</span>
+        </div>
+        <div class="game-bar" onclick="alert('Synonyms Match coming in next commit!')">
+            <span>2. Synonyms Match</span>
+            <span>&rarr;</span>
+        </div>
+        <div class="game-bar" onclick="alert('Antonyms Challenge coming in next commit!')">
+            <span>3. Antonyms Challenge</span>
+            <span>&rarr;</span>
+        </div>
+
+        <!-- Anagram Game Arena -->
+        <div id="anagramArena" class="game-container">
+            <button class="action-btn" style="float: right;" onclick="closeGame()">Back</button>
+            <h2 style="margin-bottom: 10px;">Anagram Scramble</h2>
+            
+            <div class="category-block">
+                <div class="category-title">Definition Clue</div>
+                <p id="gameClue">Search a word first to load game data or click 'Next Word'!</p>
+                <p id="gamePhonetic" class="phonetic-text" style="margin-top:5px;"></p>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <p style="font-size: 0.9rem; font-weight: 600;">Scrambled Letters:</p>
+                <div id="scrambledLetters"></div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="gameInput" placeholder="Type formed word...">
+                <button class="action-btn" onclick="checkAnagramAnswer()">Submit</button>
+            </div>
+            <p id="gameFeedback" style="font-weight: bold;"></p>
+        </div>
+    </div>
+
+    <script>
+        let currentWordData = null;
+        let savedWords = JSON.parse(localStorage.getItem('lexi_saved_words') || '[]');
+
+        // Theme Switcher Logic
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+        }
+
+        // Navigation Engine
+        function switchPage(pageId, btn) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // API Fetching & Categorized Rendering
+        async function searchWord(query = null) {
+            const word = query || document.getElementById('searchInput').value.trim();
+            if (!word) return;
+
+            const output = document.getElementById('resultOutput');
+            output.innerHTML = "<p>Searching dictionary...</p>";
+
+            try {
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+                if (!res.ok) throw new Error("Word not found");
+                const data = await res.json();
+                
+                currentWordData = data[0];
+                saveToLocalStorage(currentWordData);
+                renderDictionaryOutput(currentWordData);
+
+            } catch (err) {
+                output.innerHTML = `<p style="color:red;">No entry found for "${word}". Try another word.</p>`;
+            }
+        }
+
+        function saveToLocalStorage(data) {
+            if (!savedWords.some(w => w.word === data.word)) {
+                savedWords.push(data);
+                localStorage.setItem('lexi_saved_words', JSON.stringify(savedWords));
+            }
+        }
+
+        function renderDictionaryOutput(data) {
+            const phonetic = data.phonetic || (data.phonetics.find(p => p.text)?.text) || "N/A";
+            
+            let html = `
+                <h2 style="font-size: 2rem;">${data.word}</h2>
+                <div class="phonetic-text">Text Pronunciation: ${phonetic}</div>
+            `;
+
+            data.meanings.forEach(m => {
+                const synonyms = m.synonyms.map(s => `<span class="tag">${s}</span>`).join('') || "None";
+                const antonyms = m.antonyms.map(a => `<span class="tag">${a}</span>`).join('') || "None";
+
+                html += `
+                    <div class="category-block">
+                        <div class="category-title">Grammatical Identity: ${m.partOfSpeech}</div>
+                        <p><strong>Definition:</strong> ${m.definitions[0].definition}</p>
+                        ${m.definitions[0].example ? `<p><strong>Example:</strong> "<em>${m.definitions[0].example}</em>"</p>` : ''}
+                        
+                        <div style="margin-top: 10px;">
+                            <strong>Synonyms:</strong> ${synonyms}
+                        </div>
+                        <div style="margin-top: 5px;">
+                            <strong>Antonyms / Thesaurus:</strong> ${antonyms}
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('resultOutput').innerHTML = html;
+        }
+
+        // Anagram Game Engine
+        function startAnagramGame() {
+            document.getElementById('anagramArena').style.display = 'block';
+            if (!currentWordData && savedWords.length === 0) {
+                document.getElementById('gameClue').innerText = "Please search at least 1 word on the Search page first!";
+                return;
+            }
+            
+            const activeData = currentWordData || savedWords[Math.floor(Math.random() * savedWords.length)];
+            const target = activeData.word.toUpperCase();
+            const def = activeData.meanings[0].definitions[0].definition;
+            const phon = activeData.phonetic || activeData.phonetics[0]?.text || "";
+
+            document.getElementById('gameClue').innerText = def;
+            document.getElementById('gamePhonetic').innerText = `Pronunciation: ${phon}`;
+
+            let shuffled = target.split('').sort(() => Math.random() - 0.5);
+            let tilesHtml = shuffled.map(l => `<span class="letter-tile">${l}</span>`).join('');
+            document.getElementById('scrambledLetters').innerHTML = tilesHtml;
+            
+            window.currentGameAnswer = target;
+            document.getElementById('gameFeedback').innerText = "";
+            document.getElementById('gameInput').value = "";
+        }
+
+        function checkAnagramAnswer() {
+            const userAns = document.getElementById('gameInput').value.trim().toUpperCase();
+            const feedback = document.getElementById('gameFeedback');
+            if (userAns === window.currentGameAnswer) {
+                feedback.style.color = "green";
+                feedback.innerText = "✓ Correct Word Solved!";
+            } else {
+                feedback.style.color = "red";
+                feedback.innerText = "✗ Incorrect! Try again.";
+            }
+        }
+
+        function closeGame() {
+            document.getElementById('anagramArena').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
