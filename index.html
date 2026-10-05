@@ -7,11 +7,11 @@
 <style>
 :root{
   --bg:#ffffff; --fg:#111111; --muted:#555555; --line:#111111; --soft:#f6f6f6; --hover:#eaeaea;
-  --ok:#111111; --serif:"Linux Libertine",Georgia,Times,"Times New Roman",serif;
+  --serif:"Linux Libertine",Georgia,Times,"Times New Roman",serif;
   --sans:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 [data-theme="dark"]{
-  --bg:#111111; --fg:#ffffff; --muted:#bbbbbb; --line:#ffffff; --soft:#1b1b1b; --hover:#2a2a2a; --ok:#ffffff;
+  --bg:#111111; --fg:#ffffff; --muted:#bbbbbb; --line:#ffffff; --soft:#1b1b1b; --hover:#2a2a2a;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -23,6 +23,7 @@ button{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--
 button:hover:not(:disabled){background:var(--hover)}
 button:disabled{opacity:.5;cursor:default}
 button:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+a{color:var(--fg)}
 #themeBtn{padding:6px 12px;font-size:.9rem}
 nav{display:flex;border-bottom:1px solid var(--line)}
 nav button{flex:1;border:0;border-right:1px solid var(--line);padding:12px;font-weight:bold}
@@ -42,6 +43,7 @@ li{margin:4px 0}
 .chip{padding:3px 10px;font-size:.9rem}
 .box{border:1px solid var(--line);background:var(--soft);padding:12px 14px;margin-top:6px}
 .msg{border:1px solid var(--line);padding:14px;background:var(--soft)}
+.diag{font-size:.8rem;color:var(--muted);margin-top:10px}
 .row{display:flex;width:100%;align-items:center;gap:14px;text-align:left;padding:16px;border:1px solid var(--line);border-bottom:0;background:var(--bg)}
 .row:last-of-type{border-bottom:1px solid var(--line)}
 .row .n{font-family:var(--serif);font-size:1.5rem;width:1.6rem}
@@ -75,10 +77,10 @@ li{margin:4px 0}
 <main>
   <section id="viewSearch">
     <div class="search">
-      <input id="q" type="search" placeholder="Search a word, e.g. resilient" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search word">
+      <input id="q" type="search" placeholder="Search a word, e.g. panther" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search word">
       <button id="goBtn" type="button">Search</button>
     </div>
-    <div id="result"><div class="msg">Enter a word above to see its pronunciation, definitions, examples and thesaurus entries. Try <a href="#" data-w="hello">hello</a>, <a href="#" data-w="resilient">resilient</a> or <a href="#" data-w="dynamic">dynamic</a>.</div></div>
+    <div id="result"><div class="msg">Enter a word above to see its pronunciation, definitions, examples and thesaurus entries. Try <a href="#" data-w="panther">panther</a>, <a href="#" data-w="resilient">resilient</a> or <a href="#" data-w="dynamic">dynamic</a>.</div></div>
   </section>
   <section id="viewGames" class="hidden">
     <div id="gameList">
@@ -159,18 +161,28 @@ const SEED = {};
 RAW.forEach(r => { SEED[r[0]] = { word: r[0], phonetic: r[1], meanings: [{ pos: r[2], defs: [{ d: r[3], e: r[4] }] }], syn: r[5], ant: r[6] }; });
 const WORDS = Object.keys(SEED);
 
-/* ---------- Network ---------- */
+/* ---------- Network: three independent sources, queried in parallel ---------- */
 async function getJSON(url, ms) {
   const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), ms || 6000);
+  const t = setTimeout(() => ctl.abort(), ms || 8000);
   try {
     const res = await fetch(url, { signal: ctl.signal });
     if (!res.ok) throw new Error("HTTP " + res.status);
     return await res.json();
+  } catch (e) {
+    if (e && e.name === "AbortError") throw new Error("timeout");
+    throw e;
   } finally { clearTimeout(t); }
 }
-async function fetchApi(w) {
-  const j = await getJSON("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(w), 6000);
+function strip(html) {
+  try { return (new DOMParser().parseFromString(html || "", "text/html").body.textContent || "").replace(/\s+/g, " ").trim(); }
+  catch (e) { return String(html || "").replace(/<[^>]*>/g, "").trim(); }
+}
+const POS = { n: "noun", v: "verb", adj: "adjective", adv: "adverb", u: "" };
+
+/* Source 1: Free Dictionary API */
+async function srcFreeDict(w) {
+  const j = await getJSON("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(w), 8000);
   if (!Array.isArray(j) || !j.length) throw new Error("empty");
   let phonetic = "", syn = [], ant = [];
   const meanings = [];
@@ -185,23 +197,83 @@ async function fetchApi(w) {
       if (defs.length) meanings.push({ pos: m.partOfSpeech || "", defs });
     });
   });
-  if (!meanings.length) throw new Error("no meanings");
-  syn = uniq(syn); ant = uniq(ant);
-  // Datamuse thesaurus supplement (optional)
-  if (syn.length < 3 || !ant.length) {
-    const [s, a] = await Promise.allSettled([
-      getJSON("https://api.datamuse.com/words?rel_syn=" + encodeURIComponent(w) + "&max=10", 4000),
-      getJSON("https://api.datamuse.com/words?rel_ant=" + encodeURIComponent(w) + "&max=10", 4000)
-    ]);
-    if (s.status === "fulfilled") syn = uniq(syn.concat(s.value.map(x => x.word)));
-    if (a.status === "fulfilled") ant = uniq(ant.concat(a.value.map(x => x.word)));
-  }
-  return { word: w, phonetic, meanings, syn: syn.slice(0, 12), ant: ant.slice(0, 12) };
+  if (!meanings.length) throw new Error("no definitions");
+  return { phonetic, meanings, syn: uniq(syn), ant: uniq(ant) };
 }
+
+/* Source 2: Wiktionary REST API */
+async function srcWiktionary(w) {
+  const j = await getJSON("https://en.wiktionary.org/api/rest_v1/page/definition/" + encodeURIComponent(w), 8000);
+  const meanings = [];
+  (j.en || []).forEach(b => {
+    const defs = (b.definitions || []).slice(0, 4).map(d => {
+      const ex = (d.parsedExamples && d.parsedExamples[0] && d.parsedExamples[0].example) || (d.examples && d.examples[0]) || "";
+      return { d: strip(d.definition), e: strip(ex) };
+    }).filter(x => x.d);
+    if (defs.length) meanings.push({ pos: (b.partOfSpeech || "").toLowerCase(), defs });
+  });
+  if (!meanings.length) throw new Error("no definitions");
+  return { meanings };
+}
+
+/* Source 3: Datamuse (thesaurus, related words, definitions, syllables) */
+async function srcDatamuse(w) {
+  const q = encodeURIComponent(w), base = "https://api.datamuse.com/words?";
+  const [s, a, m, d] = await Promise.allSettled([
+    getJSON(base + "rel_syn=" + q + "&max=15", 8000),
+    getJSON(base + "rel_ant=" + q + "&max=15", 8000),
+    getJSON(base + "ml=" + q + "&max=20", 8000),
+    getJSON(base + "sp=" + q + "&md=ds&max=1", 8000)
+  ]);
+  if ([s, a, m, d].every(x => x.status === "rejected")) throw (s.reason || new Error("unreachable"));
+  const val = x => x.status === "fulfilled" && Array.isArray(x.value) ? x.value : [];
+  const out = { syn: val(s).map(x => x.word), ant: val(a).map(x => x.word), rel: val(m).map(x => x.word), meanings: [], syllables: 0 };
+  const hit = val(d).find(x => x.word === w);
+  if (hit) {
+    out.syllables = hit.numSyllables || 0;
+    const byPos = {};
+    (hit.defs || []).slice(0, 6).forEach(str => {
+      const i = str.indexOf("\t");
+      const p = POS[str.slice(0, i)] !== undefined ? POS[str.slice(0, i)] : str.slice(0, i);
+      (byPos[p] = byPos[p] || []).push({ d: str.slice(i + 1), e: "" });
+    });
+    Object.keys(byPos).forEach(p => out.meanings.push({ pos: p, defs: byPos[p] }));
+  }
+  return out;
+}
+
+function reason(r) { return (r.reason && r.reason.message) ? r.reason.message : "failed"; }
+
 async function lookup(w) {
-  try { return { data: await fetchApi(w), source: "Free Dictionary API" }; } catch (e) {}
-  if (SEED[w]) return { data: SEED[w], source: "Local seed dictionary (offline)" };
-  return null;
+  const [f, wk, dm] = await Promise.allSettled([srcFreeDict(w), srcWiktionary(w), srcDatamuse(w)]);
+  const F = f.status === "fulfilled" ? f.value : null;
+  const W = wk.status === "fulfilled" ? wk.value : null;
+  const D = dm.status === "fulfilled" ? dm.value : null;
+  const seed = SEED[w] || null;
+
+  const used = [];
+  let meanings = [];
+  if (F) { meanings = F.meanings; used.push("Free Dictionary API"); }
+  else if (W) { meanings = W.meanings; used.push("Wiktionary"); }
+  else if (D && D.meanings.length) { meanings = D.meanings; used.push("Datamuse"); }
+  else if (seed) { meanings = seed.meanings; used.push("Local seed dictionary"); }
+  if (D && (D.syn.length || D.ant.length || D.rel.length) && !used.includes("Datamuse")) used.push("Datamuse thesaurus");
+
+  const syn = uniq([].concat(F ? F.syn : [], D ? D.syn : [], seed ? seed.syn : [])).filter(x => x !== w).slice(0, 15);
+  const ant = uniq([].concat(F ? F.ant : [], D ? D.ant : [], seed ? seed.ant : [])).filter(x => x !== w).slice(0, 15);
+  const rel = D ? uniq(D.rel).filter(x => x !== w && !syn.includes(x) && !ant.includes(x)).slice(0, 15) : [];
+  let phonetic = (F && F.phonetic) || (seed && seed.phonetic) || "";
+  const syllables = D ? D.syllables : 0;
+
+  const status = [
+    "Free Dictionary API: " + (f.status === "fulfilled" ? "ok" : reason(f)),
+    "Wiktionary: " + (wk.status === "fulfilled" ? "ok" : reason(wk)),
+    "Datamuse: " + (dm.status === "fulfilled" ? "ok" : reason(dm))
+  ];
+  const reached = [f, wk, dm].some(x => x.status === "fulfilled");
+
+  if (!meanings.length) return { found: false, reached, status };
+  return { found: true, data: { word: w, phonetic, syllables, meanings, syn, ant, rel }, source: used.join(" + "), status };
 }
 
 /* ---------- Word Search ---------- */
@@ -213,29 +285,40 @@ function render(r) {
   const poss = uniq(d.meanings.map(m => m.pos));
   const examples = [];
   d.meanings.forEach(m => m.defs.forEach(x => { if (x.e) examples.push(x.e); }));
+  const ph = [];
+  if (d.phonetic) ph.push(esc(d.phonetic));
+  if (d.syllables) ph.push(d.syllables + (d.syllables === 1 ? " syllable" : " syllables"));
   let html = '<h1 class="title">' + esc(d.word) + '</h1><p class="src">Source: ' + esc(r.source) + '</p>';
-  html += '<h2>Phonetic Pronunciation</h2><p>' + (d.phonetic ? esc(d.phonetic) : "Not available.") + '</p>';
-  html += '<h2>Part of Speech / Grammatical Identity</h2><p>' + (poss.length ? poss.map(esc).join(", ") : "Not available.") + '</p>';
+  html += '<h2>Phonetic Pronunciation</h2><p>' + (ph.length ? ph.join(" &middot; ") : "Not available.") + '</p>';
+  html += '<h2>Part of Speech / Grammatical Identity</h2><p>' + (poss.length ? poss.map(p => esc(p || "unspecified")).join(", ") : "Not available.") + '</p>';
   html += '<h2>Definitions</h2>';
   d.meanings.forEach(m => {
     html += '<h3>' + esc(m.pos || "definition") + '</h3><ol>' + m.defs.map(x => '<li>' + esc(x.d) + '</li>').join("") + '</ol>';
   });
-  html += '<h2>Example Usage</h2>' + (examples.length ? '<ul>' + examples.map(e => '<li class="ex">' + esc(e) + '</li>').join("") + '</ul>' : '<p>No examples available.</p>');
+  html += '<h2>Example Usage</h2>' + (examples.length ? '<ul>' + examples.map(e => '<li class="ex">' + esc(e) + '</li>').join("") + '</ul>' : '<p>No examples available for this word.</p>');
   html += '<h2>Synonyms</h2>' + (d.syn.length ? chips(d.syn) : '<p>None found.</p>');
-  html += '<h2>Antonyms / Thesaurus</h2>' + (d.ant.length ? chips(d.ant) : '<p>None found.</p>');
+  html += '<h2>Antonyms / Thesaurus</h2><h3>Antonyms</h3>' + (d.ant.length ? chips(d.ant) : '<p>None found.</p>');
+  html += '<h3>Related words</h3>' + (d.rel.length ? chips(d.rel) : '<p>None found.</p>');
+  html += '<p class="diag">' + r.status.map(esc).join(" &middot; ") + '</p>';
   $("#result").innerHTML = html;
 }
 let searchId = 0;
 async function search(w) {
-  w = (w || "").trim().toLowerCase();
+  w = (w || "").trim().toLowerCase().replace(/\s+/g, " ");
   if (!w) return;
   $("#q").value = w;
   const id = ++searchId;
   $("#result").innerHTML = '<div class="msg">Searching for “' + esc(w) + '”…</div>';
-  const r = await lookup(w);
+  let r;
+  try { r = await lookup(w); } catch (e) { r = { found: false, reached: false, status: [String(e && e.message || e)] }; }
   if (id !== searchId) return;
-  if (r) render(r);
-  else $("#result").innerHTML = '<div class="msg">No entry found for “' + esc(w) + '”. Check the spelling, or you may be offline. Try one of: ' + WORDS.slice(0, 8).map(esc).join(", ") + '.</div>';
+  if (r.found) { render(r); return; }
+  const diag = '<p class="diag">' + r.status.map(esc).join(" &middot; ") + '</p>';
+  if (r.reached) {
+    $("#result").innerHTML = '<div class="msg">No entry found for “' + esc(w) + '”. Check the spelling and try again.' + diag + '</div>';
+  } else {
+    $("#result").innerHTML = '<div class="msg">Could not reach any dictionary service. Check your connection (or browser/WebView network permissions) and try again. Offline words you can search: ' + WORDS.slice(0, 8).map(esc).join(", ") + '.' + diag + '</div>';
+  }
 }
 $("#goBtn").addEventListener("click", () => search($("#q").value));
 $("#q").addEventListener("keydown", e => { if (e.key === "Enter") search($("#q").value); });
@@ -246,7 +329,7 @@ $("#result").addEventListener("click", e => {
 
 /* ---------- Games ---------- */
 const box = $("#gameBox"), list = $("#gameList");
-let cur = null, score = 0, total = 0, last = "";
+let score = 0, total = 0, last = "";
 const POOL = uniq(WORDS.concat(...RAW.map(r => r[5]), ...RAW.map(r => r[6])));
 
 function shell(title) {
@@ -256,18 +339,17 @@ function shell(title) {
 }
 function updScore() { const s = $("#score"); if (s) s.textContent = "Score: " + score + " / " + total; }
 function openGame(id) {
-  cur = id; score = 0; total = 0; last = "";
+  score = 0; total = 0; last = "";
   list.classList.add("hidden"); box.classList.remove("hidden");
   GAMES[id].start();
 }
-function closeGame() { box.classList.add("hidden"); list.classList.remove("hidden"); box.innerHTML = ""; cur = null; }
+function closeGame() { box.classList.add("hidden"); list.classList.remove("hidden"); box.innerHTML = ""; }
 list.addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b) openGame(b.getAttribute("data-g")); });
 function pickWord(filter) {
   const c = WORDS.filter(w => filter(SEED[w]) && w !== last);
   const w = pick(c.length ? c : WORDS); last = w; return w;
 }
 
-/* Generic multiple-choice round */
 function mcq(o) {
   const body = $("#gBody");
   body.innerHTML = '<p class="src">' + esc(o.label) + '</p><div class="q">' + o.question + '</div>' +
