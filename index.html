@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexiCore - Minimal Dictionary & Arcade</title>
+    <title>WordArcade - Minimal Dictionary & Exam Prep</title>
     <style>
         :root {
             --bg: #ffffff;
@@ -32,7 +32,6 @@
             padding: 15px;
         }
 
-        /* Header Layout */
         header {
             display: flex;
             justify-content: space-between;
@@ -42,7 +41,7 @@
             margin-bottom: 15px;
         }
 
-        h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+        h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
 
         .theme-toggle {
             background: none;
@@ -54,7 +53,6 @@
             font-weight: 600;
         }
 
-        /* Navigation Bar */
         nav {
             display: flex;
             gap: 10px;
@@ -81,7 +79,6 @@
         .page { display: none; }
         .page.active { display: block; }
 
-        /* Word Search Controls */
         .search-box {
             display: flex;
             gap: 8px;
@@ -107,7 +104,6 @@
             cursor: pointer;
         }
 
-        /* Category Output Styling */
         .phonetic-text {
             font-family: monospace;
             color: var(--subtext);
@@ -140,7 +136,6 @@
             margin: 3px;
         }
 
-        /* Games List (Bars View) */
         .game-bar {
             width: 100%;
             padding: 15px;
@@ -157,12 +152,12 @@
             align-items: center;
         }
 
-        /* Mini Game Container */
         .game-container {
             display: none;
             border: 1px solid var(--text);
             padding: 15px;
             margin-top: 15px;
+            background: var(--card-bg);
         }
 
         .letter-tile {
@@ -172,13 +167,32 @@
             font-size: 1.2rem;
             font-weight: bold;
             margin: 4px;
+            background: var(--bg);
+        }
+
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid var(--text);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .option-btn:hover {
+            background: var(--border);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>LexiCore</h1>
+        <h1>WordArcade</h1>
         <button class="theme-toggle" onclick="toggleTheme()">Theme: Dark/Light</button>
     </header>
 
@@ -190,7 +204,7 @@
     <!-- PAGE 1: DICTIONARY SEARCH -->
     <div id="search-page" class="page active">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Enter word (e.g. resilient, silent)...">
+            <input type="text" id="searchInput" placeholder="Search word (e.g. resilient, fragile)...">
             <button class="action-btn" onclick="searchWord()">Search</button>
         </div>
 
@@ -203,51 +217,71 @@
             <span>1. Anagram Scramble (Definition Clue)</span>
             <span>&rarr;</span>
         </div>
-        <div class="game-bar" onclick="alert('Synonyms Match coming in next commit!')">
+        <div class="game-bar" onclick="startSynonymGame()">
             <span>2. Synonyms Match</span>
             <span>&rarr;</span>
         </div>
-        <div class="game-bar" onclick="alert('Antonyms Challenge coming in next commit!')">
+        <div class="game-bar" onclick="startAntonymGame()">
             <span>3. Antonyms Challenge</span>
             <span>&rarr;</span>
         </div>
+        <div class="game-bar" onclick="startFillBlankGame()">
+            <span>4. Fill in the Blanks</span>
+            <span>&rarr;</span>
+        </div>
 
-        <!-- Anagram Game Arena -->
-        <div id="anagramArena" class="game-container">
-            <button class="action-btn" style="float: right;" onclick="closeGame()">Back</button>
-            <h2 style="margin-bottom: 10px;">Anagram Scramble</h2>
+        <!-- Universal Game Arena Container -->
+        <div id="gameArena" class="game-container">
+            <button class="action-btn" style="float: right;" onclick="closeGame()">Close Game</button>
+            <h2 id="gameTitle" style="margin-bottom: 10px;">Game Arena</h2>
             
             <div class="category-block">
-                <div class="category-title">Definition Clue</div>
-                <p id="gameClue">Search a word first to load game data or click 'Next Word'!</p>
-                <p id="gamePhonetic" class="phonetic-text" style="margin-top:5px;"></p>
+                <div id="gameClueHeader" class="category-title">Clue</div>
+                <p id="gameClueText">Search words on Search Page to populate game data!</p>
+                <p id="gameSubClue" class="phonetic-text" style="margin-top:5px;"></p>
             </div>
 
-            <div style="margin-bottom: 15px;">
-                <p style="font-size: 0.9rem; font-weight: 600;">Scrambled Letters:</p>
-                <div id="scrambledLetters"></div>
-            </div>
+            <!-- Custom Controls based on Active Game -->
+            <div id="gameDynamicContent"></div>
 
-            <div class="search-box">
-                <input type="text" id="gameInput" placeholder="Type formed word...">
-                <button class="action-btn" onclick="checkAnagramAnswer()">Submit</button>
-            </div>
-            <p id="gameFeedback" style="font-weight: bold;"></p>
+            <p id="gameFeedback" style="font-weight: bold; margin-top: 10px;"></p>
         </div>
     </div>
 
     <script>
         let currentWordData = null;
-        let savedWords = JSON.parse(localStorage.getItem('lexi_saved_words') || '[]');
+        // Default Seed Words Data taaki bina initial search ke bhi games active banein
+        const defaultSeedWords = [
+            {
+                word: "resilient",
+                phonetic: "/rɪˈzɪl.jənt/",
+                meanings: [{
+                    partOfSpeech: "adjective",
+                    definitions: [{ definition: "Able to withstand or recover quickly from difficult conditions.", example: "He showed a resilient attitude." }],
+                    synonyms: ["tough", "adaptable", "hardy"],
+                    antonyms: ["fragile", "vulnerable"]
+                }]
+            },
+            {
+                word: "fragile",
+                phonetic: "/ˈfrædʒ.aɪl/",
+                meanings: [{
+                    partOfSpeech: "adjective",
+                    definitions: [{ definition: "Easily broken or damaged.", example: "Handle the fragile package with care." }],
+                    synonyms: ["delicate", "brittle"],
+                    antonyms: ["strong", "robust"]
+                }]
+            }
+        ];
 
-        // Theme Switcher Logic
+        let savedWords = JSON.parse(localStorage.getItem('wordarcade_saved_words') || JSON.stringify(defaultSeedWords));
+
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
         }
 
-        // Navigation Engine
         function switchPage(pageId, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -255,7 +289,6 @@
             btn.classList.add('active');
         }
 
-        // API Fetching & Categorized Rendering
         async function searchWord(query = null) {
             const word = query || document.getElementById('searchInput').value.trim();
             if (!word) return;
@@ -278,14 +311,14 @@
         }
 
         function saveToLocalStorage(data) {
-            if (!savedWords.some(w => w.word === data.word)) {
+            if (!savedWords.some(w => w.word.toLowerCase() === data.word.toLowerCase())) {
                 savedWords.push(data);
-                localStorage.setItem('lexi_saved_words', JSON.stringify(savedWords));
+                localStorage.setItem('wordarcade_saved_words', JSON.stringify(savedWords));
             }
         }
 
         function renderDictionaryOutput(data) {
-            const phonetic = data.phonetic || (data.phonetics.find(p => p.text)?.text) || "N/A";
+            const phonetic = data.phonetic || (data.phonetics && data.phonetics.find(p => p.text)?.text) || "N/A";
             
             let html = `
                 <h2 style="font-size: 2rem;">${data.word}</h2>
@@ -293,8 +326,8 @@
             `;
 
             data.meanings.forEach(m => {
-                const synonyms = m.synonyms.map(s => `<span class="tag">${s}</span>`).join('') || "None";
-                const antonyms = m.antonyms.map(a => `<span class="tag">${a}</span>`).join('') || "None";
+                const synonyms = m.synonyms.length ? m.synonyms.map(s => `<span class="tag">${s}</span>`).join('') : "None";
+                const antonyms = m.antonyms.length ? m.antonyms.map(a => `<span class="tag">${a}</span>`).join('') : "None";
 
                 html += `
                     <div class="category-block">
@@ -315,35 +348,44 @@
             document.getElementById('resultOutput').innerHTML = html;
         }
 
-        // Anagram Game Engine
-        function startAnagramGame() {
-            document.getElementById('anagramArena').style.display = 'block';
-            if (!currentWordData && savedWords.length === 0) {
-                document.getElementById('gameClue').innerText = "Please search at least 1 word on the Search page first!";
-                return;
-            }
-            
-            const activeData = currentWordData || savedWords[Math.floor(Math.random() * savedWords.length)];
-            const target = activeData.word.toUpperCase();
-            const def = activeData.meanings[0].definitions[0].definition;
-            const phon = activeData.phonetic || activeData.phonetics[0]?.text || "";
-
-            document.getElementById('gameClue').innerText = def;
-            document.getElementById('gamePhonetic').innerText = `Pronunciation: ${phon}`;
-
-            let shuffled = target.split('').sort(() => Math.random() - 0.5);
-            let tilesHtml = shuffled.map(l => `<span class="letter-tile">${l}</span>`).join('');
-            document.getElementById('scrambledLetters').innerHTML = tilesHtml;
-            
-            window.currentGameAnswer = target;
-            document.getElementById('gameFeedback').innerText = "";
-            document.getElementById('gameInput').value = "";
+        function getActiveWordData() {
+            return currentWordData || savedWords[Math.floor(Math.random() * savedWords.length)];
         }
 
-        function checkAnagramAnswer() {
-            const userAns = document.getElementById('gameInput').value.trim().toUpperCase();
+        // --- GAME 1: ANAGRAM SCRAMBLE ---
+        function startAnagramGame() {
+            const activeData = getActiveWordData();
+            document.getElementById('gameArena').style.display = 'block';
+            document.getElementById('gameTitle').innerText = "Anagram Scramble";
+            document.getElementById('gameClueHeader').innerText = "Definition Clue";
+
+            const target = activeData.word.toUpperCase();
+            const def = activeData.meanings[0].definitions[0].definition;
+            const phon = activeData.phonetic || (activeData.phonetics && activeData.phonetics[0]?.text) || "";
+
+            document.getElementById('gameClueText').innerText = def;
+            document.getElementById('gameSubClue').innerText = `Pronunciation: ${phon}`;
+
+            let shuffled = target.split('').sort(() => Math.random() - 0.5).join('');
+            let tilesHtml = shuffled.split('').map(l => `<span class="letter-tile">${l}</span>`).join('');
+
+            document.getElementById('gameDynamicContent').innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <p style="font-size: 0.9rem; font-weight: 600;">Scrambled Letters:</p>
+                    <div>${tilesHtml}</div>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="gameInput" placeholder="Type formed word...">
+                    <button class="action-btn" onclick="checkAnagramAnswer('${target}')">Submit</button>
+                </div>
+            `;
+            document.getElementById('gameFeedback').innerText = "";
+        }
+
+        function checkAnagramAnswer(correct) {
+            const ans = document.getElementById('gameInput').value.trim().toUpperCase();
             const feedback = document.getElementById('gameFeedback');
-            if (userAns === window.currentGameAnswer) {
+            if (ans === correct) {
                 feedback.style.color = "green";
                 feedback.innerText = "✓ Correct Word Solved!";
             } else {
@@ -352,8 +394,124 @@
             }
         }
 
+        // --- GAME 2: SYNONYMS MATCH ---
+        function startSynonymGame() {
+            document.getElementById('gameArena').style.display = 'block';
+            document.getElementById('gameTitle').innerText = "Synonyms Match";
+
+            const validWords = savedWords.filter(w => w.meanings.some(m => m.synonyms && m.synonyms.length > 0));
+            if (!validWords.length) {
+                document.getElementById('gameClueText').innerText = "Search words like 'resilient' or 'fragile' to generate synonym challenges!";
+                return;
+            }
+
+            const activeData = validWords[Math.floor(Math.random() * validWords.length)];
+            const targetWord = activeData.word.toUpperCase();
+            const meaningObj = activeData.meanings.find(m => m.synonyms.length > 0);
+            const correctSynonym = meaningObj.synonyms[0];
+
+            document.getElementById('gameClueHeader').innerText = "Target Word";
+            document.getElementById('gameClueText').innerText = `Find Synonym for: ${targetWord}`;
+            document.getElementById('gameSubClue').innerText = `Part of Speech: ${meaningObj.partOfSpeech}`;
+
+            let distractors = ["obvious", "rapid", "silent", "obscure", "vivid", "dense"];
+            let options = [correctSynonym, ...distractors.sort(() => Math.random() - 0.5).slice(0, 3)];
+            options.sort(() => Math.random() - 0.5);
+
+            let optionsHtml = options.map(opt => `
+                <button class="option-btn" onclick="checkOptionAnswer('${opt}', '${correctSynonym}')">${opt}</button>
+            `).join('');
+
+            document.getElementById('gameDynamicContent').innerHTML = optionsHtml;
+            document.getElementById('gameFeedback').innerText = "";
+        }
+
+        // --- GAME 3: ANTONYMS CHALLENGE ---
+        function startAntonymGame() {
+            document.getElementById('gameArena').style.display = 'block';
+            document.getElementById('gameTitle').innerText = "Antonyms Challenge";
+
+            const validWords = savedWords.filter(w => w.meanings.some(m => m.antonyms && m.antonyms.length > 0));
+            if (!validWords.length) {
+                document.getElementById('gameClueText').innerText = "Search words with antonyms (e.g., 'fragile') to activate this mode!";
+                return;
+            }
+
+            const activeData = validWords[Math.floor(Math.random() * validWords.length)];
+            const targetWord = activeData.word.toUpperCase();
+            const meaningObj = activeData.meanings.find(m => m.antonyms.length > 0);
+            const correctAntonym = meaningObj.antonyms[0];
+
+            document.getElementById('gameClueHeader').innerText = "Target Word";
+            document.getElementById('gameClueText').innerText = `Find Opposite (Antonym) for: ${targetWord}`;
+            document.getElementById('gameSubClue').innerText = `Part of Speech: ${meaningObj.partOfSpeech}`;
+
+            let distractors = ["gentle", "complex", "frequent", "narrow", "vague"];
+            let options = [correctAntonym, ...distractors.sort(() => Math.random() - 0.5).slice(0, 3)];
+            options.sort(() => Math.random() - 0.5);
+
+            let optionsHtml = options.map(opt => `
+                <button class="option-btn" onclick="checkOptionAnswer('${opt}', '${correctAntonym}')">${opt}</button>
+            `).join('');
+
+            document.getElementById('gameDynamicContent').innerHTML = optionsHtml;
+            document.getElementById('gameFeedback').innerText = "";
+        }
+
+        // --- GAME 4: FILL IN THE BLANKS ---
+        function startFillBlankGame() {
+            document.getElementById('gameArena').style.display = 'block';
+            document.getElementById('gameTitle').innerText = "Fill in the Blanks";
+
+            const validWords = savedWords.filter(w => w.meanings.some(m => m.definitions.some(d => d.example)));
+            if (!validWords.length) {
+                document.getElementById('gameClueText').innerText = "Search words that contain example sentences to unlock Cloze Test!";
+                return;
+            }
+
+            const activeData = validWords[Math.floor(Math.random() * validWords.length)];
+            const targetWord = activeData.word;
+            let exampleSentence = "";
+
+            activeData.meanings.forEach(m => {
+                m.definitions.forEach(d => {
+                    if (d.example && !exampleSentence) exampleSentence = d.example;
+                });
+            });
+
+            // Replace word in sentence with blank
+            const regex = new RegExp(targetWord, "gi");
+            const maskedSentence = exampleSentence.replace(regex, "________");
+
+            document.getElementById('gameClueHeader').innerText = "Sentence Context";
+            document.getElementById('gameClueText').innerText = `"${maskedSentence}"`;
+            document.getElementById('gameSubClue').innerText = "Choose the correct word that fits the sentence context.";
+
+            let distractors = ["resilient", "fragile", "dynamic", "silent", "obscure"];
+            let options = [targetWord, ...distractors.filter(d => d !== targetWord).slice(0, 3)];
+            options.sort(() => Math.random() - 0.5);
+
+            let optionsHtml = options.map(opt => `
+                <button class="option-btn" onclick="checkOptionAnswer('${opt}', '${targetWord}')">${opt}</button>
+            `).join('');
+
+            document.getElementById('gameDynamicContent').innerHTML = optionsHtml;
+            document.getElementById('gameFeedback').innerText = "";
+        }
+
+        function checkOptionAnswer(selected, correct) {
+            const feedback = document.getElementById('gameFeedback');
+            if (selected.toLowerCase() === correct.toLowerCase()) {
+                feedback.style.color = "green";
+                feedback.innerText = "✓ Correct Answer!";
+            } else {
+                feedback.style.color = "red";
+                feedback.innerText = `✗ Incorrect. Correct answer was: ${correct}`;
+            }
+        }
+
         function closeGame() {
-            document.getElementById('anagramArena').style.display = 'none';
+            document.getElementById('gameArena').style.display = 'none';
         }
     </script>
 </body>
